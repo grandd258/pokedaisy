@@ -304,8 +304,45 @@ object Gen2Art {
         ))
     }
 
-    /** [CHARS] or [POLISHED_CHARS]: the game's text characters for its font tiles 0x80-0xFF. */
-    internal fun chars(polished: Boolean): Map<Int, Char> = if (polished) POLISHED_CHARS else CHARS
+    /**
+     * Japanese Crystal's text (Bulbapedia's Generation II Japanese table, the same codes pret/pokecrystal keeps for
+     * the kana that English still prints). 0x80 is ア, not A. Dakuten and handakuten that players type in a name are
+     * their own codes (ガ is 0x05), not a mark plus a kana. Fullwidth digits become ASCII so the companion font
+     * draws them. A space in a row below is an unused code.
+     */
+    private val JAPANESE_CHARS: Map<Int, Char> = buildMap {
+        fun row(start: Int, glyphs: String) {
+            glyphs.forEachIndexed { i, c -> if (c != ' ') put(start + i, c) }
+        }
+        row(0x05, "ガギグゲゴザジズゼゾダ")
+        row(0x10, "ヂヅデド")
+        row(0x19, "バビブボ")
+        row(0x26, "がぎぐげござじずぜぞだぢづでど")
+        row(0x3A, "ばびぶべぼ")
+        row(0x40, "パピプポぱぴぷぺぽ")
+        put(0x6E, 'ぃ'); put(0x6F, 'ぅ')
+        put(0x70, '「'); put(0x71, '」'); put(0x72, '『'); put(0x73, '』')
+        put(0x74, '・'); put(0x75, '…')
+        put(0x76, 'ぁ'); put(0x77, 'ぇ'); put(0x78, 'ぉ')
+        put(0x7F, ' ')
+        row(0x80, "アイウエオカキクケコサシスセソタ")
+        row(0x90, "チツテトナニヌネノハヒフホマミム")
+        row(0xA0, "メモヤユヨラレルロワヲンッャュョ")
+        row(0xB0, "ィあいうえおかきくけこさしすせそ")
+        row(0xC0, "たちつてとなにぬねのはひふへほま")
+        row(0xD0, "みむめもやゆよらリるれろわをんっ")
+        row(0xE0, "ゃゅょー゜゛？！。ァゥェ")
+        put(0xEF, '♂')
+        put(0xF0, '¥'); put(0xF1, '×'); put(0xF2, '．'); put(0xF3, '／'); put(0xF4, 'ォ'); put(0xF5, '♀')
+        for (i in 0 until 10) put(0xF6 + i, '0' + i)
+    }
+
+    /** [CHARS], [POLISHED_CHARS] or [JAPANESE_CHARS]. */
+    internal fun chars(polished: Boolean, japanese: Boolean = false): Map<Int, Char> = when {
+        polished -> POLISHED_CHARS
+        japanese -> JAPANESE_CHARS
+        else -> CHARS
+    }
 
     private fun off(bank: Int, addr: Int) = if (bank == 0) addr else bank * 0x4000 + (addr - 0x4000)
     private fun u8(b: ByteArray, o: Int) = b[o].toInt() and 0xFF

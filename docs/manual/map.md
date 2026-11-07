@@ -51,7 +51,7 @@ The game's own rules still apply: you need the badge that allows it and you have
 
 It works in FireRed, LeafGreen, Emerald, Ruby and Sapphire in every language and on these hacks: Unbound, Radical Red, Ultra Violet, Ghost Grey, Let's Go, Gaia, Odyssey, Amethyst, Sword and Shield Ultimate Plus, Orange Islands, Glazed (its first region), Emerald Legacy, Heart and Soul, SoulGold, Lazarus and Emerald Imperium.
 
-On the Game Boy it works in Red, Blue, Yellow (in every language), PureRed, PureBlue and Crystal. The list is the one the game's own map would give you: in Red, Blue, Yellow, PureRed and PureBlue every town you've been to, and in Crystal the towns you've been to in the region you're in (Kanto's once you've reached the Indigo Plateau).
+On the Game Boy it works in Red, Blue, Yellow (in every language), PureRed, PureBlue and Crystal (the USA release, the USA / Europe revision 1 and the Australian one). The list is the one the game's own map would give you: in Red, Blue, Yellow, PureRed and PureBlue every town you've been to, and in Crystal the towns you've been to in the region you're in (Kanto's once you've reached the Indigo Plateau). The Japanese Crystal cart does not fly from the map yet.
 
 On the DS it works in Platinum, HeartGold, SoulSilver, Black, White, Black 2 and White 2. Black, White and their sequels ask for no badge: once someone knows the move, every town you've arrived at is on the list.
 

@@ -1,10 +1,11 @@
 package com.pokedaisy.app.companion.data
 
 /**
- * Generation 2 (Game Boy Color) games' RAM. Addresses are pret/pokecrystal's symbols (its build is
- * byte-identical to every retail English Crystal: rev 0, rev 1 and Australia, which keep their RAM
- * at the same addresses), checked on headless captures of a new game played in each (the `crystal`
- * fixtures).
+ * Generation 2 (Game Boy Color) games' RAM. Addresses for the English carts are pret/pokecrystal's
+ * symbols (its build is byte-identical to every retail English Crystal: rev 0, rev 1 and Australia,
+ * which keep their RAM at the same addresses), checked on headless captures of a new game played in
+ * each (the `crystal` fixtures). Japanese Crystal is [GEN2_CRYSTAL_JP]: the same structs, shorter
+ * names, so the saved block sits earlier.
  *
  * Crystal keeps most of its state in WRAM bank 1 (D000-DFFF) but switches that window to other banks
  * mid-frame (palettes, the battle's scratch), so a read over the bus can land on the wrong bank: the
@@ -74,6 +75,11 @@ data class Gen2Config(
     val berriesMax: Int = 0,
     /** A faithful build: its own species types, moves and item names over the normal ones (ActiveTables). */
     val polishedFaithful: Boolean = false,
+    /** Bytes stored for a trainer name or a nickname, including the 0x50 terminator. English Crystal is 11;
+     *  Japanese Crystal is 6 (five kana and '@'). */
+    val nameLength: Int = 11,
+    /** Nicknames use the Japanese kana table (Bulbapedia's Generation II Japanese encoding). */
+    val japaneseText: Boolean = false,
 )
 
 /** Crystal's Mail (FLOWER_MAIL 0x9E, SURF_MAIL 0xB5 .. MIRAGE_MAIL 0xBD): the party menu marks a mon holding one with Mail's icon. */
@@ -112,6 +118,46 @@ val GEN2_CRYSTAL = Gen2Config(
     genderRatios = gen2GenderRatiosCrystal,
     tmItems = gen2TmItemsCrystal,
     pokedex = POKEDEX_CRYSTAL,
+)
+
+/**
+ * Retail Japanese Crystal (ポケットモンスター クリスタル, header PM_CRYSTAL / BXTJ, No-Intro sha1
+ * [TelemetrySampler.CRYSTAL_JP_SHA1]). Not the English layout: names are 6 bytes (five kana plus 0x50) and the
+ * link-received party that sizes the enemy-party union is shorter, so everything after that union moves.
+ *
+ * Derived from pret/pokecrystal's English WRAM (the sections and which union member is largest), with
+ * NAME_LENGTH / MON_NAME_LENGTH 6 and 9 boxes of 9-byte names, then checked against PKHeX's Japanese Crystal
+ * save offsets (SAV2Offsets, the save is a straight copy of wPlayerData / wCurMapData / wPokemonData) and
+ * Bulbapedia's Generation II save structure (party list 368 bytes, not English's 428). The battle menus, tilemap
+ * and wEnemyMon sit before any shortened name, so they stay on the English addresses. wBattleMon and wCurOTMon
+ * sit after the two battle nicknames inside a fixed-size union, so they move back by 10 bytes.
+ *
+ * Not checked on a live cart or a headless capture (no ROM is in this repo). Pokédex pages, the guide, EXPAND,
+ * FLY, wild encounters and the PC are not wired: those read English ROM or script addresses. The place names
+ * reuse English Crystal's landmark table (the same map ids). Move-name and string buffers are assumed to be
+ * English's 13 and 19 bytes; a shorter one would slide this whole bank.
+ */
+val GEN2_CRYSTAL_JP = GEN2_CRYSTAL.copy(
+    partyCount = wramx(1, 0xDC4B),
+    partyMons = wramx(1, 0xDC53),
+    numItems = wramx(1, 0xD833),
+    numKeyItems = wramx(1, 0xD85D),
+    numBalls = wramx(1, 0xD878),
+    tmsHms = wramx(1, 0xD7FA),
+    money = wramx(1, 0xD7EF),
+    mapGroup = wramx(1, 0xDC29),
+    backupMapGroup = wramx(1, 0xDC21),
+    battleMon = 0xC622L,
+    otPartyCount = wramx(1, 0xD27B),
+    otPartyMons = wramx(1, 0xD283),
+    curOTMon = 0xC659L,
+    playerGender = wramx(1, 0xD431),
+    gameTime = wramx(1, 0xD465),
+    dexCaught = wramx(1, 0xDDDB),
+    dexSeen = wramx(1, 0xDDFB),
+    pokedex = null,
+    nameLength = 6,
+    japaneseText = true,
 )
 
 /**
@@ -331,9 +377,9 @@ const val GEN2_PARTY_MON_SIZE = 48
 const val GEN2_BATTLE_MON_SIZE = 32
 private const val GEN2_EGG = 0xFD
 private const val GEN2_TMS_HMS = 57
-/** wPartyMonNicknames' 11-byte names, right after wPartyMonOT (6 x 11): see [readGen2Telemetry]. */
-private const val GEN2_NAME_LEN = 11
-private const val GEN2_NICKNAMES_AFTER_MONS = PARTY_SIZE * GEN2_PARTY_MON_SIZE + PARTY_SIZE * GEN2_NAME_LEN
+/** wPartyMonNicknames, right after wPartyMons and wPartyMonOT (6 x [Gen2Config.nameLength]). */
+private fun gen2NicknamesAt(cfg: Gen2Config) =
+    PARTY_SIZE * GEN2_PARTY_MON_SIZE + PARTY_SIZE * cfg.nameLength
 
 private fun be16(b: ByteArray, o: Int) = ((b[o].toInt() and 0xFF) shl 8) or (b[o + 1].toInt() and 0xFF)
 private fun u8(b: ByteArray, o: Int) = b[o].toInt() and 0xFF
@@ -377,16 +423,19 @@ fun decodeGen2PartyMon(raw: ByteArray, off: Int, cfg: Gen2Config, egg: Boolean =
 }
 
 /**
- * [raw]'s nickname at [off] (11 bytes) in the game's charmap (null = blank). Crystal ends names with 0x50; Polished Crystal's
- * own charmap ends them with 0x53 (or <DONE> 0x52), as its player / box names do.
+ * [raw]'s nickname at [off] ([Gen2Config.nameLength] bytes) in the game's charmap (null = blank). Crystal ends names
+ * with 0x50; Polished Crystal's own charmap ends them with 0x53 (or <DONE> 0x52). Japanese Crystal uses the kana
+ * table ([Gen2Config.japaneseText]); a code with no glyph is skipped, so a dakuten the table doesn't name doesn't
+ * print as a Latin letter.
  */
-private fun gen2Nickname(raw: ByteArray, off: Int, polished: Boolean): String? {
-    if (off + GEN2_NAME_LEN > raw.size) return null
-    val chars = Gen2Art.chars(polished)
+private fun gen2Nickname(raw: ByteArray, off: Int, cfg: Gen2Config): String? {
+    val len = cfg.nameLength
+    if (off + len > raw.size) return null
+    val chars = Gen2Art.chars(cfg.polished, cfg.japaneseText)
     return buildString {
-        for (i in 0 until GEN2_NAME_LEN) {
+        for (i in 0 until len) {
             val c = raw[off + i].toInt() and 0xFF
-            if (c == 0x00 || c == 0x50 || (polished && (c == 0x52 || c == 0x53))) break
+            if (c == 0x00 || c == 0x50 || (cfg.polished && (c == 0x52 || c == 0x53))) break
             chars[c]?.let { append(it) }
         }
     }.trim().takeIf { it.isNotEmpty() }
@@ -519,11 +568,11 @@ fun readGen2Telemetry(r: MemoryReader, cfg: Gen2Config): Telemetry {
     val count = u8(countRaw, 0).takeIf { it <= PARTY_SIZE && (cfg.polished || it == PARTY_SIZE || u8(countRaw, 1 + it) == 0xFF) } ?: 0
     val partyRaw = r.readCoreMemory(cfg.partyMons, PARTY_SIZE * GEN2_PARTY_MON_SIZE)
     // wPartyMonNicknames: 6 x 11 bytes, after wPartyMons and wPartyMonOT.
-    val nicknames = r.readCoreMemory(cfg.partyMons + GEN2_NICKNAMES_AFTER_MONS, PARTY_SIZE * GEN2_NAME_LEN)
+    val nicknames = r.readCoreMemory(cfg.partyMons + gen2NicknamesAt(cfg), PARTY_SIZE * cfg.nameLength)
     val party = (0 until count).mapIndexedNotNull { i, _ ->
         val mon = if (cfg.polished) decodePolishedPartyMon(partyRaw, i * GEN2_PARTY_MON_SIZE, cfg)
         else decodeGen2PartyMon(partyRaw, i * GEN2_PARTY_MON_SIZE, cfg, egg = u8(countRaw, 1 + i) == GEN2_EGG)
-        mon?.copy(nickname = gen2Nickname(nicknames, i * GEN2_NAME_LEN, cfg.polished))
+        mon?.copy(nickname = gen2Nickname(nicknames, i * cfg.nameLength, cfg))
     }
 
     val items = readGen2Bag(r, cfg)

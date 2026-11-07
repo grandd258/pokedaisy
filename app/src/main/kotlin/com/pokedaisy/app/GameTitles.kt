@@ -82,6 +82,8 @@ object GameTitles {
         "f4cd194bdee0d04ca4eac29e09b8e4e9d818c133" to "Pokémon Crystal",
         "f2f52230b536214ef7c9924f483392993e226cfb" to "Pokémon Crystal",
         "a0fc810f1d4e124434f7be2c989ab5b5892ddf36" to "Pokémon Crystal",
+        // Japanese Crystal (No-Intro). Its own RAM and kana nicknames: GEN2_CRYSTAL_JP.
+        "95127b901bbce2407daf43cce9f45d4c27ef635d" to "ポケットモンスター クリスタル",
         // pret/pokegold's roms.sha1.
         "d8b8a3600a465308c9953dfa04f0081c05bdcb94" to "Pokémon Gold",
         "49b163f7e57702bc939d642a18f591de55d92dae" to "Pokémon Silver",
