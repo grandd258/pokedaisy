@@ -116,6 +116,10 @@ test('Game Boy Color: Crystal, all three English releases', () => {
   }
 });
 
+test('Game Boy Color: Japanese Crystal', () => {
+  assert.equal(verdict(data, { platform: 'gb', sha1: '95127b901bbce2407daf43cce9f45d4c27ef635d' }).title, 'ポケットモンスター クリスタル');
+});
+
 test('Game Boy Color: Crystal Clear, both versions in both colour builds', () => {
   for (const sha1 of ['a1c4da6b0057c98fe4ebea45d6812a484fc69abd', '6fc677bf7a9db103cb9ee11ac08d26782e69ae41',
     '84d5c4924c3f1f3fc690669148b7e392948fb23d', '534876e4e4d0d79a82fef3bbe5bea11c40451727']) {

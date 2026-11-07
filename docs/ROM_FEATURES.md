@@ -14,6 +14,7 @@ change to any of the places listed under "Where it's decided" updates its rows h
 | PureRed / PureBlue (GB) | 2.7.6 | n/a | ✅ | ✅ ¹ | ✅ ⁸ | — | ✅ ¹³ | — | n/a | n/a | ✅ ¹³ | ✅ ¹³ | — | n/a | n/a |
 | Gold / Silver (GBC) | USA/Europe | n/a | ✅ | ✅ ¹ | ✅ ⁸ | — | — | — | n/a | n/a | n/a | n/a | — | n/a | — |
 | Crystal (GBC) | USA, USA/Europe rev 1, AU | ✅ ¹² | ✅ | ✅ ¹ | ✅ ⁸ | — | ✅ ¹³ | — | n/a | n/a | ✅ ¹³ | ✅ ¹³ | — | n/a | — |
+| Crystal (GBC) | Japan | — | ◐ ³⁰ | — | — | — | — | — | n/a | n/a | — | — | — | n/a | — |
 | Crystal Clear (GBC) | 2.5.11, 2.6.0 (4 builds) | n/a | ✅ | ✅ ¹ | ✅ ⁸ | — | — | — | n/a | n/a | n/a | n/a | — | n/a | — |
 | Prism (GBC) | 0.95 build 254 | n/a | ✅ | ✅ ¹ | ✅ ⁸ | — | — | — | n/a | n/a | n/a | n/a | ✅ ¹⁶ | n/a | — |
 | Polished Crystal (GBC) | 3.2.0 - 3.2.3 (16 builds) | n/a | ✅ | ✅ ¹ | ✅ ⁸ | — | — | — | n/a | n/a | n/a | n/a | ✅ ¹⁶ | n/a | — |
@@ -368,6 +369,12 @@ change to any of the places listed under "Where it's decided" updates its rows h
     battle buttons (its panels aren't HeartGold's): DS LAYOUT floats the game's
     touch screen in while its battle UI's input handler is set (+0x238 -> +0x10: the commands, the moves, the party), and
     SMART FF slows down then. EXPAND and STEADY music work as HeartGold's (widecheck's overlap as US HeartGold's).
+30. Japanese Crystal (`GEN2_CRYSTAL_JP`, sha1 `95127b90…`, header PM_CRYSTAL / BXTJ): names are 6 bytes. The saved
+    block is the GameShark list (party 0xDC9D, money 0xD841, items 0xD885, map 0xDC7B, dex owned 0xDE2D), not a
+    shrink of English's. The foe's battle struct is 0x31 later than English (level code 0xD244, so wEnemyMon is
+    0xD237); the tilemap and 2D menu stay put, and that menu was not checked on a capture, so the battle buttons
+    are only partly there. EXPAND, FLY, wild encounters, the PC, the guide and the Pokédex pages use English ROM
+    or script addresses and stay off.
 
 ## What each column is
 
