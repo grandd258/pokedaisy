@@ -369,12 +369,12 @@ change to any of the places listed under "Where it's decided" updates its rows h
     battle buttons (its panels aren't HeartGold's): DS LAYOUT floats the game's
     touch screen in while its battle UI's input handler is set (+0x238 -> +0x10: the commands, the moves, the party), and
     SMART FF slows down then. EXPAND and STEADY music work as HeartGold's (widecheck's overlap as US HeartGold's).
-30. Japanese Crystal (`GEN2_CRYSTAL_JP`, sha1 `95127b90…`, header PM_CRYSTAL / BXTJ): names are 6 bytes, so the saved
-    WRAM sits earlier than the English carts. Party, bag, money and the map are read there, and the battle menu reader
-    is English Crystal's (same tile positions, cursor tile 0xED) on the addresses that did not move. That reader was
-    not checked on a capture, so the battle buttons are only partly there. EXPAND, FLY, wild encounters, the PC, the
-    guide and the Pokédex pages use English ROM or script addresses and stay off. Move-name and string buffers are
-    assumed to be English's 13 and 19 bytes.
+30. Japanese Crystal (`GEN2_CRYSTAL_JP`, sha1 `95127b90…`, header PM_CRYSTAL / BXTJ): names are 6 bytes. The saved
+    block is the GameShark list (party 0xDC9D, money 0xD841, items 0xD885, map 0xDC7B, dex owned 0xDE2D), not a
+    shrink of English's. The foe's battle struct is 0x31 later than English (level code 0xD244, so wEnemyMon is
+    0xD237); the tilemap and 2D menu stay put, and that menu was not checked on a capture, so the battle buttons
+    are only partly there. EXPAND, FLY, wild encounters, the PC, the guide and the Pokédex pages use English ROM
+    or script addresses and stay off.
 
 ## What each column is
 

@@ -4,8 +4,8 @@ package com.pokedaisy.app.companion.data
  * Generation 2 (Game Boy Color) games' RAM. Addresses for the English carts are pret/pokecrystal's
  * symbols (its build is byte-identical to every retail English Crystal: rev 0, rev 1 and Australia,
  * which keep their RAM at the same addresses), checked on headless captures of a new game played in
- * each (the `crystal` fixtures). Japanese Crystal is [GEN2_CRYSTAL_JP]: the same structs, shorter
- * names, so the saved block sits earlier.
+ * each (the `crystal` fixtures). Japanese Crystal is [GEN2_CRYSTAL_JP]: the same structs, with the
+ * saved block and the battle struct at the GameShark addresses, not English's.
  *
  * Crystal keeps most of its state in WRAM bank 1 (D000-DFFF) but switches that window to other banks
  * mid-frame (palettes, the battle's scratch), so a read over the bus can land on the wrong bank: the
@@ -122,39 +122,54 @@ val GEN2_CRYSTAL = Gen2Config(
 
 /**
  * Retail Japanese Crystal (ポケットモンスター クリスタル, header PM_CRYSTAL / BXTJ, No-Intro sha1
- * [TelemetrySampler.CRYSTAL_JP_SHA1]). Not the English layout: names are 6 bytes (five kana plus 0x50) and the
- * link-received party that sizes the enemy-party union is shorter, so everything after that union moves.
+ * [TelemetrySampler.CRYSTAL_JP_SHA1]). Names are 6 bytes, and the saved WRAM is not English's.
  *
- * Derived from pret/pokecrystal's English WRAM (the sections and which union member is largest), with
- * NAME_LENGTH / MON_NAME_LENGTH 6 and 9 boxes of 9-byte names, then checked against PKHeX's Japanese Crystal
- * save offsets (SAV2Offsets, the save is a straight copy of wPlayerData / wCurMapData / wPokemonData) and
- * Bulbapedia's Generation II save structure (party list 368 bytes, not English's 428). The battle menus, tilemap
- * and wEnemyMon sit before any shortened name, so they stay on the English addresses. wBattleMon and wCurOTMon
- * sit after the two battle nicknames inside a fixed-size union, so they move back by 10 bytes.
+ * Saved block, from the Glitch City Japanese Crystal GameShark list and a public symbol list
+ * (wPlayerData `01:D48C`, wPokemonData `01:DC9D`), not from shrinking English's link union:
+ * party count `01xx9DDC` = 0xDC9D, first party struct `01xxA5DC` = 0xDCA5, money `010F41D8` = 0xD841,
+ * items `01xx85D8` = 0xD885, key items `01xxAFD8` = 0xD8AF, balls `01xxCAD8` = 0xD8CA, TM01 `01634CD8` = 0xD84C,
+ * map `01xx7BDC` = 0xDC7B, owned dex `01FF2DDE` = 0xDE2D, seen `01FF4DDE` = 0xDE4D. wPlayerID is 0xD48C, so
+ * gender (9 bytes earlier, the same header) is 0xD483 and the clock (PKHeX's Japanese Crystal play time is
+ * 0x2B bytes after the player id in the save) is 0xD4B7. An earlier pass put this whole block 0x52 too low.
  *
- * Not checked on a live cart or a headless capture (no ROM is in this repo). Pokédex pages, the guide, EXPAND,
- * FLY, wild encounters and the PC are not wired: those read English ROM or script addresses. The place names
- * reuse English Crystal's landmark table (the same map ids). Move-name and string buffers are assumed to be
- * English's 13 and 19 bytes; a shorter one would slide this whole bank.
+ * Battle WRAM is not English's either. The same list's in-battle foe level `910044D2` = 0xD244 and the
+ * one-hit byte `910048D2` = 0xD248 are English's wEnemyMon+13 and wEnemyMon+0x11 moved by +0x31, and foe
+ * move 1 `01xx39D2` = 0xD239 is English's move 1 (0xD208) plus that same 0x31. So wEnemyMon is 0xD237.
+ * `01xx35D2` = 0xD235 is the temp species two bytes before it (English's 0xD204), not the battle struct.
+ * The only text buffers before wCurBattleMon are the move-name and string buffers at the start of that
+ * section, so the +0x31 applies from wCurBattleMon through the enemy party. The OT name there is 6 bytes,
+ * so wOTPartyCount is 16 bytes into that block (0xD2AC), not English's 21.
+ *
+ * WRAM0's battle nicknames are 6 bytes inside a fixed 480-byte union, so wBattleMon is 0xC622 (English
+ * 0xC62C minus 10) and the tilemap and 2D menu stay put. Not checked on a live cart. Pokédex pages, the
+ * guide, EXPAND, FLY, wild encounters and the PC stay off (English ROM or script addresses). Landmarks
+ * are English Crystal's table.
  */
 val GEN2_CRYSTAL_JP = GEN2_CRYSTAL.copy(
-    partyCount = wramx(1, 0xDC4B),
-    partyMons = wramx(1, 0xDC53),
-    numItems = wramx(1, 0xD833),
-    numKeyItems = wramx(1, 0xD85D),
-    numBalls = wramx(1, 0xD878),
-    tmsHms = wramx(1, 0xD7FA),
-    money = wramx(1, 0xD7EF),
-    mapGroup = wramx(1, 0xDC29),
-    backupMapGroup = wramx(1, 0xDC21),
+    partyCount = wramx(1, 0xDC9D),
+    partyMons = wramx(1, 0xDCA5),
+    numItems = wramx(1, 0xD885),
+    numKeyItems = wramx(1, 0xD8AF),
+    numBalls = wramx(1, 0xD8CA),
+    tmsHms = wramx(1, 0xD84C),
+    money = wramx(1, 0xD841),
+    mapGroup = wramx(1, 0xDC7B),
+    backupMapGroup = wramx(1, 0xDC73),
+    battleMode = wramx(1, 0xD25E),
     battleMon = 0xC622L,
-    otPartyCount = wramx(1, 0xD27B),
-    otPartyMons = wramx(1, 0xD283),
+    enemyMon = wramx(1, 0xD237),
+    otPartyCount = wramx(1, 0xD2AC),
+    otPartyMons = wramx(1, 0xD2B4),
     curOTMon = 0xC659L,
-    playerGender = wramx(1, 0xD431),
-    gameTime = wramx(1, 0xD465),
-    dexCaught = wramx(1, 0xDDDB),
-    dexSeen = wramx(1, 0xDDFB),
+    playerGender = wramx(1, 0xD483),
+    gameTime = wramx(1, 0xD4B7),
+    dexCaught = wramx(1, 0xDE2D),
+    dexSeen = wramx(1, 0xDE4D),
+    menu2D = 0xCFA1L,
+    moveMenuType = wramx(1, 0xD266),
+    tileMap = 0xC4A0L,
+    partyMenuAction = wramx(1, 0xD172),
+    curBattleMon = wramx(1, 0xD105),
     pokedex = null,
     nameLength = 6,
     japaneseText = true,
